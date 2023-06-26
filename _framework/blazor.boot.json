@@ -8,7 +8,7 @@
   "resources": {
     "assembly": {
       "Blazored.LocalStorage.dll": "sha256-eXVgTw72kEn74FZgDQbLtvAmXbiZDSj5gzUnxVmwowQ=",
-      "Client.dll": "sha256-T0hQM2\/IUSaI\/mr1Vzva2HwQz5ug0g+fI1ORjZDTNsk=",
+      "Client.dll": "sha256-456z51lBhctnm9UI7\/hMa0JeDo7x0KaVv4j7itA4jF4=",
       "Firebase.SDK.dll": "sha256-gRnRWHSzUtHphzOGYu1lAM9uDTvM7tv41uW6MevLCHk=",
       "Google.Api.CommonProtos.dll": "sha256-2U2DmkufTVMpq7OMbp3uNtv71C6Fp73VoT41RcmqFQM=",
       "Google.Api.Gax.dll": "sha256-UCj7\/JeDgFA4uOKw1HkDzJO+VGKfIwLwb\/ugLssN4wQ=",
