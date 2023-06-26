@@ -1,0 +1,47 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Color="Color.Dark" Elevation="1" Dense="false">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" href="https://github.com/Antsy15400" Target="_blank" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="@open" Color="Color.Dark" ClipMode="clipMode" Elevation="1" Variant="@DrawerVariant.Responsive">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Todo app</MudText>
+        </MudDrawerHeader>
+        <MudNavMenu Color="Color.Inherit">
+            <MudNavLink IconColor="Color.Surface" Icon="@Icons.Material.Filled.Home" Match="NavLinkMatch.All" href="/">Home</MudNavLink>
+            <MudNavLink IconColor="Color.Surface" Icon="@Icons.Material.Filled.EditNote" Match="NavLinkMatch.All" href="todos">Todos</MudNavLink>
+            <AuthorizeView>
+                <Authorized>
+                    <MudNavLink IconColor="Color.Surface" Icon="@Icons.Material.Filled.Logout" Match="NavLinkMatch.All" href="logout">Logout</MudNavLink>
+                </Authorized>
+                <NotAuthorized>
+                    <MudNavLink IconColor="Color.Surface" Icon="@Icons.Material.Filled.Login" Match="NavLinkMatch.All" href="login">Login</MudNavLink>
+                    <MudNavLink IconColor="Color.Surface" Icon="@Icons.Material.Filled.AppRegistration" Match="NavLinkMatch.All" href="register">Register</MudNavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent Class="pt-16 px-16">
+        <MudContainer Class="mt-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+
+@code{
+    bool open = false;
+    DrawerClipMode clipMode = DrawerClipMode.Never;
+
+    void ToggleDrawer()
+    {
+        open = !open;
+    }
+}

@@ -1,0 +1,13 @@
+﻿@page "/logout"
+@inject NavigationManager navigationManager
+@inject ILocalStorageService localStorageService
+@inject FirebaseAuthenticationState authProvider
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await localStorageService.RemoveItemAsync("accessToken");
+        await localStorageService.RemoveItemAsync("accessToken");
+        authProvider.ManagerUser();
+        navigationManager.NavigateTo("");
+    }
+}

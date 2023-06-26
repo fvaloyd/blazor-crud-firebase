@@ -1,0 +1,96 @@
+﻿@page "/login"
+
+@inject IFirebaseLoginService loginService
+@inject IFirebaseUserInfoService userInfoService
+@inject IFirebaseRefreshService refreshTokenService 
+@inject NavigationManager navigationManager
+@inject ILocalStorageService localStorageService
+@inject FirebaseAuthenticationState authProvider
+
+@using System.ComponentModel.DataAnnotations
+
+<EditForm Model="@request" OnSubmit="HandleLoginFormSubmit">
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Email" Class="mt-3"
+                    @bind-Value="request.Email" For="@(() => request.Email)" />
+                    <MudTextField Label="Password" HelperText="Insert your password." Class="mt-3"
+                    @bind-Value="request.Password" For="@(() => request.Password)" InputType="@PasswordInput" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ButtonTestclick" AdornmentAriaLabel="Show Password" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Login</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudPaper Class="pa-4 mud-height-full">
+                <MudText Typo="Typo.subtitle2">Login Summary</MudText>
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        @errorMessage
+                    </MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                Fill out the form correctly to login to the app. If you are not registered you can do it <MudLink Href="register">here.</MudLink>
+            </MudText>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+
+@code {
+    private LoginRequest request = new();
+    bool success;
+    string errorMessage;
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    void ButtonTestclick()
+    {
+        if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+
+    private async Task HandleLoginFormSubmit()
+    {
+        StateHasChanged();
+        LoginResponse loginResponse;
+        try
+        {
+            loginResponse = await loginService.Login(request);
+            await localStorageService.SetItemAsync("userId", loginResponse.LocalId);
+            await localStorageService.SetItemAsync("accessToken", loginResponse.IdToken);
+            await localStorageService.SetItemAsync("refreshToken", loginResponse.RefreshToken);
+            await localStorageService.SetItemAsync("isAuthenticate", true);
+            authProvider.ManagerUser();
+            navigationManager.NavigateTo("");
+        }
+        catch (ApiException ex)
+        {
+            var responseError = await ex.GetContentAsAsync<ErrorResponse>();
+            success = false;
+            errorMessage = responseError.Error.Message.Substring(0, 1) + responseError.Error.Message.Substring(1).Replace('_', ' ').ToLower();
+        }
+    }
+}

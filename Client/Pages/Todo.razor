@@ -1,0 +1,90 @@
+﻿@page "/todos"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IAsyncDisposable
+@inject TodoService todoService
+@inject NavigationManager navigationManager
+
+
+<MudText Typo="Typo.h2" Align="Align.Center">Todos</MudText>
+
+<MudPaper Height="auto" Width="100%">
+    <EditForm Model="@todo" OnSubmit="@HandleSubmit">
+        <MudTextField Label="New todo" Class="mt-3" Variant="Variant.Outlined" InputType="InputType.Text" @bind-Value="todo.Title" For="@(() => todo.Title)" />
+        <MudButton Style="display: none" ButtonType="ButtonType.Submit" Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Send" Color="Color.Primary">Send</MudButton>
+    </EditForm>
+    <MudList Clickable="true">
+        @if (todos.Count > 0)
+        {
+            @foreach(var todo in todos)
+            {
+                <MudListItem>
+                    <MudGrid>
+                        <MudItem>
+                            <MudCheckBox @bind-Checked="@todo.IsComplete" Color="Color.Warning" CheckedIcon="@Icons.Material.Filled.Star" UncheckedIcon="@Icons.Material.Filled.StarOutline"></MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="8" Style="align-self:center">
+                            <MudText Typo="Typo.body1">@todo.Title</MudText>
+                        </MudItem>
+                        <MudItem Style="align-self: center">
+                            <MudButton OnClick="@(() => EditTask(todo.Id))" Variant="Variant.Text" Color="Color.Primary">Edit task</MudButton>
+                            <MudButton OnClick="@(() => DeleteTask(todo.Id))" Variant="Variant.Text" Color="Color.Warning">Delete task</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudListItem>
+                @if(todos.IndexOf(todo) != todos.Count - 1)
+                {
+                    <MudDivider />
+                }
+            }
+        }
+    </MudList>
+</MudPaper>
+
+
+@code {
+    Client.Todo todo = new();
+    List<Client.Todo> todos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        todos = await todoService.GetAsync();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (todos.Contains(todo))
+        {
+            await todoService.SaveAsync(todos);
+            todo = new();
+            return;
+        }
+        todos.Add(todo);
+        await todoService.SaveAsync(todos);
+        todo = new();
+        StateHasChanged();
+    }
+
+    private void EditTask(string id)
+    {
+        todo = todos.SingleOrDefault(t => t.Id == id);
+    }
+
+    private async Task DeleteTask(string id)
+    {
+        var todoToDelete = todos.SingleOrDefault(t => t.Id == id);
+        todos.Remove(todoToDelete);
+        await todoService.SaveAsync(todos);
+    }
+
+    private async Task SaveChanges()
+    {
+        Console.WriteLine("Saving changes");
+        await todoService.SaveAsync(todos);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await todoService.SaveAsync(todos);
+    }
+}

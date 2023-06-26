@@ -1,0 +1,147 @@
+﻿@page "/register"
+
+@inject IFirebaseRegisterService registerService
+@inject NavigationManager navigationManager
+@inject ILocalStorageService localStorageService
+@inject FirebaseAuthenticationState authProvider
+
+@using System.ComponentModel.DataAnnotations
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Username" HelperText="Max. 8 characters"
+                    @bind-Value="model.Username" For="@(() => model.Username)" />
+                    <MudTextField Label="Email" Class="mt-3"
+                    @bind-Value="model.Email" For="@(() => model.Email)" />
+                    <MudTextField Label="Password" HelperText="Choose a strong password" Class="mt-3"
+                    @bind-Value="model.Password" For="@(() => model.Password)" InputType="@FirstPasswordInput" Adornment="Adornment.End" AdornmentIcon="@FirstPasswordInputIcon" OnAdornmentClick="ShowFirstPassword" AdornmentAriaLabel="Show first password" />
+                    <MudTextField Label="Password" HelperText="Repeat the password" Class="mt-3"
+                    @bind-Value="model.Password2" For="@(() => model.Password2)" InputType="@VerifyPasswordInput" Adornment="Adornment.End" AdornmentIcon="@VerifyPasswordInputIcon" OnAdornmentClick="ShowVerifyPassword" AdornmentAriaLabel="Show verify password"/>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudPaper Class="pa-4 mud-height-full">
+                <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        <ValidationSummary />
+                    </MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                Fill out the form correctly to see the success message. If you are already registered you can log in <MudLink Href="login">here.</MudLink>
+            </MudText>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+
+@code {
+    RegisterAccountForm model = new RegisterAccountForm();
+    bool success;
+    string registrationErrorMessage;
+    
+    
+    bool isVerifyPasswordShow;
+    InputType VerifyPasswordInput = InputType.Password;
+    string VerifyPasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+    void ShowVerifyPassword()
+    {
+        if (isVerifyPasswordShow)
+        {
+            isVerifyPasswordShow = false;
+            VerifyPasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            VerifyPasswordInput = InputType.Password;
+        }
+        else
+        {
+            isVerifyPasswordShow = true;
+            VerifyPasswordInputIcon = Icons.Material.Filled.Visibility;
+            VerifyPasswordInput = InputType.Text;
+        }
+    }
+
+    bool isFirstPasswordShow;
+    InputType FirstPasswordInput = InputType.Password;
+    string FirstPasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+    void ShowFirstPassword()
+    {
+        if (isFirstPasswordShow)
+        {
+            isFirstPasswordShow = false;
+            FirstPasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            FirstPasswordInput = InputType.Password;
+        }
+        else
+        {
+            isFirstPasswordShow = true;
+            FirstPasswordInputIcon = Icons.Material.Filled.Visibility;
+            FirstPasswordInput = InputType.Text;
+        }
+    }
+
+    public class RegisterAccountForm
+    {
+        [Required]
+        [StringLength(8, ErrorMessage = "Name length can't be more than 8.")]
+        public string Username { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        [StringLength(30, ErrorMessage = "Password must be at least 8 characters long.", MinimumLength = 8)]
+        public string Password { get; set; }
+
+        [Required]
+        [Compare(nameof(Password))]
+        public string Password2 { get; set; }
+
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        success = true;
+        StateHasChanged();
+        RegisterResponse registerResponse = null!;
+        RegisterRequest request = new()
+            {
+                DisplayName = model.Username,
+                Email = model.Email,
+                Password = model.Password
+            };
+        try
+        {
+            registerResponse = await registerService.Register(request);
+            await localStorageService.SetItemAsync("userId", registerResponse.LocalId);
+            await localStorageService.SetItemAsync("accessToken", registerResponse.IdToken);
+            await localStorageService.SetItemAsync("refreshToken", registerResponse.RefreshToken);
+            await localStorageService.SetItemAsync("isAuthenticate", true);
+            authProvider.ManagerUser();
+            navigationManager.NavigateTo("");
+        }
+        catch (ApiException ex)
+        {
+            var responseError = await ex.GetContentAsAsync<ErrorResponse>();
+            success = false;
+            string registrationErrorMessage = responseError.Error.Message.Substring(0, 1) + responseError.Error.Message.Substring(1).Replace('_', ' ').ToLower();
+        }
+    }
+
+}
